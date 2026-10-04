@@ -343,3 +343,24 @@
 @media (prefers-reduced-motion: reduce) {
   .login-page .login-page__google { transition: none; }
 }
+.login-page .login-page__facebook {
+  width: 100%;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 13px 18px;
+  border: 1px solid #1765cd;
+  border-radius: 12px;
+  background: #1765cd;
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.login-page .login-page__facebook:hover:not(:disabled) { background: #1255b0; }
+.login-page .login-page__facebook:focus-visible { outline: 3px solid #4285f4; outline-offset: 3px; }
+.login-page .login-page__facebook:disabled { opacity: .6; cursor: wait; }
+.login-page .login-page__facebook-icon { font-family: Arial, sans-serif; font-weight: 700; font-size: 24px; }

@@ -187,3 +187,8 @@ export async function signInWithProvider(provider) {
   if (!data?.url) throw new Error('El proveedor no está configurado en InsForge.');
   window.location.assign(data.url);
 }
+
+export async function getEnabledOAuthProviders() {
+  const data = resultOrThrow(await getInsforge().auth.getPublicAuthConfig());
+  return data?.oAuthProviders || [];
+}

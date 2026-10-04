@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import * as authService from '../services/authService';
 import { validateLoginForm } from '../services/validators';
@@ -18,6 +18,14 @@ function LoginPage() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [providers, setProviders] = useState([]);
+  useEffect(() => {
+    let active = true;
+    authService.getEnabledOAuthProviders().then(enabled => {
+      if (active) setProviders(enabled);
+    }).catch(() => { /* Los formularios siguen disponibles si falla la consulta de proveedores. */ });
+    return () => { active = false; };
+  }, []);
 
   function handleChange(e) {
     const { name, value } = e.target;
@@ -61,11 +69,11 @@ function LoginPage() {
 }
   }
 
-  async function handleGoogleLogin() {
+  async function handleProviderLogin(provider) {
     if (loading) return;
     setLoading(true);
     setFormError('');
-    try { await authService.signInWithProvider('google'); }
+    try { await authService.signInWithProvider(provider); }
     catch (error) { setFormError(error.message); setLoading(false); }
   }
 
@@ -163,7 +171,7 @@ function LoginPage() {
             {loading ? 'Ingresando...' : 'Iniciar sesión'}
           </button>
           <div className="login-page__divider"><span>o</span></div>
-          <button type="button" className="login-page__google" onClick={handleGoogleLogin} disabled={loading}>
+          <button type="button" className="login-page__google" onClick={() => handleProviderLogin('google')} disabled={loading}>
             <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true">
               <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
               <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6C44.4 38.03 46.98 31.86 46.98 24.55z" />
@@ -172,6 +180,13 @@ function LoginPage() {
             </svg>
             <span>Iniciar sesión con Google</span>
           </button>
+          {providers.includes('facebook') && (
+            <button type="button" className="login-page__facebook" disabled={loading}
+              onClick={() => handleProviderLogin('facebook')}>
+              <span aria-hidden="true" className="login-page__facebook-icon">f</span>
+              Iniciar sesión con Facebook
+            </button>
+          )}
         </form>
 
         <p className="login-page__register">
