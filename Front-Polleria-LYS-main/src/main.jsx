@@ -8,9 +8,7 @@ import "./styles/login.css";
 import './styles/global.css'
 import "./styles/caja.css";
 import "./styles/dashboard.css";
-import { seedTestAccounts } from './services/authService.js'
 
-seedTestAccounts()
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
