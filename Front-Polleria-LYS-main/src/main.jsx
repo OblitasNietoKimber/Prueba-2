@@ -10,6 +10,10 @@ import "./styles/caja.css";
 import "./styles/dashboard.css";
 
 
+import { initializeAuth } from './services/authService.js';
+
+initializeAuth();
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <App />

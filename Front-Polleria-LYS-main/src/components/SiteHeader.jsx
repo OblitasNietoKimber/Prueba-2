@@ -2,20 +2,25 @@ import { ShoppingCart } from 'lucide-react'
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext'
 import { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import * as authService from '../services/authService';
 export default function SiteHeader() {
   const { cartCount, openCart } = useCart()
   const location = useLocation();
   const navigate = useNavigate();
 
-const handleLogout = () => {
-  authService.logout();
-  setMenuPath(null);
-  navigate('/login');
+const [logoutError, setLogoutError] = useState('');
+const handleLogout = async () => {
+  setLogoutError('');
+  try {
+    await authService.logout();
+    setMenuPath(null);
+    navigate('/login');
+  } catch (error) { setLogoutError(error.message); }
 };
   const [menuPath, setMenuPath] = useState(null);
 
-  const user = authService.getCurrentUser();
+  const { user } = useAuth();
   const canAccess = (roles) => Boolean(user && roles.includes(user.rol));
 
   const initials = user
@@ -100,6 +105,7 @@ const handleLogout = () => {
                     <span>{user.email}</span>
                   </div>
 
+                  {logoutError && <p role="alert">{logoutError}</p>}
                   <NavLink to="/profile" className="lys-account-link" onClick={() => setMenuPath(null)}>
                     Mi perfil
                   </NavLink>

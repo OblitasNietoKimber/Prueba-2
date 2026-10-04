@@ -23,6 +23,8 @@ function Field({
   error,
   placeholder,
   autoComplete,
+  inputMode,
+  maxLength,
 }) {
   const id = `register-${name}`;
 
@@ -41,6 +43,8 @@ function Field({
         onChange={onChange}
         placeholder={placeholder}
         autoComplete={autoComplete}
+        inputMode={inputMode}
+        maxLength={maxLength}
         aria-invalid={Boolean(error)}
         aria-describedby={error ? `${id}-error` : undefined}
       />
@@ -61,6 +65,9 @@ function RegisterPage() {
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [verificationMessage, setVerificationMessage] = useState('');
 
   function handleChange(e) {
   const { name, value } = e.target;
@@ -108,14 +115,13 @@ function RegisterPage() {
     setLoading(true);
 
     try {
-      await authService.register(form);
-
-      await authService.login({
-        email: form.email,
-        password: form.password,
-      });
-
-      navigate('/profile');
+      const result = await authService.register(form);
+      if (result.requiresVerification) {
+        setVerificationEmail(result.email);
+        setForm(initialForm);
+      } else {
+        navigate('/profile', { replace: true });
+      }
     } catch (err) {
       setFormError(
         err.message || 'No se pudo completar el registro.'
@@ -123,6 +129,29 @@ function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleVerification(e) {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setFormError('');
+    try {
+      if (!/^\d{6}$/.test(code.trim())) throw new Error('Ingresa el código de 6 dígitos recibido por correo.');
+      const user = await authService.verifyRegistration({ email: verificationEmail, code });
+      navigate(user ? '/profile' : '/login', { replace: true });
+    } catch (error) { setFormError(error.message); }
+    finally { setLoading(false); }
+  }
+  async function handleResend() {
+    if (loading) return;
+    setLoading(true);
+    setFormError('');
+    try {
+      await authService.resendVerification(verificationEmail);
+      setVerificationMessage('Revisa tu correo: enviamos una nueva verificación.');
+    } catch (error) { setFormError(error.message); }
+    finally { setLoading(false); }
   }
 
   return (
@@ -140,7 +169,19 @@ function RegisterPage() {
           Regístrate para hacer pedidos y guardar tus datos en Leñas y Sabores.
         </p>
 
-        <form onSubmit={handleSubmit} noValidate>
+        {verificationEmail ? (
+          <form onSubmit={handleVerification} noValidate>
+            <p role="status">Revisa {verificationEmail}. Abre el enlace de verificación o ingresa el código recibido.</p>
+            <Field label="Código recibido por correo" name="code" value={code}
+              onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              autoComplete="one-time-code" inputMode="numeric" maxLength={6} />
+            {formError && <p className="login-page__form-error" role="alert">{formError}</p>}
+            {verificationMessage && <p role="status">{verificationMessage}</p>}
+            <button className="btn-ember login-page__submit" disabled={loading}>{loading ? 'Verificando...' : 'Verificar correo'}</button>
+            <button type="button" className="login-page__link" disabled={loading} onClick={handleResend}>Reenviar verificación</button>
+            <p><Link to="/login">Ya abrí el enlace, iniciar sesión</Link></p>
+          </form>
+        ) : <form onSubmit={handleSubmit} noValidate>
           <div className="register-page__row">
             <Field
               label="Nombre"
@@ -222,7 +263,7 @@ function RegisterPage() {
           >
             {loading ? 'Creando cuenta...' : 'Crear cuenta'}
           </button>
-        </form>
+        </form>}
 
         <p className="login-page__register">
           ¿Ya tienes cuenta?{' '}
