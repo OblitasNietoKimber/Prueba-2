@@ -48,6 +48,7 @@ export function initializeAuth() {
   if (initialization) return initialization;
   initialization = (async () => {
     try {
+      ['lys_users', 'lys_session', 'lys_reset_requests'].forEach(key => localStorage.removeItem(key));
       const client = getInsforge();
       client.auth.onAuthStateChange(event => {
         if (event === 'signedOut') { generation++; publish({ user: null, loading: false, error: '' }); }
@@ -105,6 +106,7 @@ export async function login({ email, password }) {
 }
 
 export async function register(form) {
+  const version = ++generation;
   const email = normalizeEmail(form.email);
   const data = resultOrThrow(await getInsforge().auth.signUp({
     email, password: form.password, name: `${form.nombre.trim()} ${form.apellido.trim()}`,
@@ -115,7 +117,7 @@ export async function register(form) {
   sessionStorage.setItem(PENDING_PROFILE, JSON.stringify({ id: data.user.id, email, ...personalFields(form) }));
   if (!data.accessToken) return { requiresVerification: true, email };
   const user = await loadProfile(data.user);
-  publish({ user, loading: false, error: '' });
+  if (version === generation) publish({ user, loading: false, error: '' });
   return { user, requiresVerification: false };
 }
 
@@ -136,22 +138,28 @@ export async function logout() {
 
 export async function updateProfile(data) {
   if (!snapshot.user) throw new Error('Debes iniciar sesión.');
+  const previousUser = snapshot.user;
+  const version = generation;
   const rows = resultOrThrow(await getInsforge().database.from('perfiles')
-    .update(personalFields(data)).eq('id', snapshot.user.id).select());
+    .update(personalFields(data)).eq('id', previousUser.id).select());
   if (!rows?.[0]) throw new Error('No se pudo actualizar tu perfil.');
-  const user = { ...snapshot.user, ...rows[0] };
+  if (version !== generation) throw new Error('La sesión cambió. Inicia sesión nuevamente.');
+  const user = { ...previousUser, ...rows[0] };
   publish({ user });
   return user;
 }
 export async function updatePreferences(preferencias) {
   if (!snapshot.user) throw new Error('Debes iniciar sesión.');
+  const previousUser = snapshot.user;
+  const version = generation;
   const rows = resultOrThrow(await getInsforge().database.from('perfiles')
     .update({ preferencias: {
       notificacionesEmail: Boolean(preferencias.notificacionesEmail),
       notificacionesPromos: Boolean(preferencias.notificacionesPromos),
-    } }).eq('id', snapshot.user.id).select());
+    } }).eq('id', previousUser.id).select());
   if (!rows?.[0]) throw new Error('No se pudieron guardar tus preferencias.');
-  const user = { ...snapshot.user, ...rows[0] };
+  if (version !== generation) throw new Error('La sesión cambió. Inicia sesión nuevamente.');
+  const user = { ...previousUser, ...rows[0] };
   publish({ user });
   return user;
 }
