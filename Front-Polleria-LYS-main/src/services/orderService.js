@@ -1,3 +1,4 @@
+import { getCurrentUser } from './authService'
 import cocinaService from './cocinaService'
 
 const STORAGE_KEY = 'lys-client-orders'
@@ -29,15 +30,18 @@ function writeOrders(orders) {
 }
 
 function getOrders() {
-  return readOrders().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+  return readOrders().filter(order => order.clienteId === getCurrentUser()?.id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 }
 
 function getOrderById(id) {
-  return readOrders().find((order) => order.id === id) || null
+  return getOrders().find((order) => order.id === id) || null
 }
 
 function createOrder({ id, items, subtotal, shipping, total, deliveryType, form, payment }) {
+  const user = getCurrentUser()
+  if (!user || user.rol !== 'cliente') throw new Error('Debes iniciar sesión como cliente para registrar un pedido.')
   const order = {
+    clienteId: user.id,
     id,
     items: items.map(({ product, qty }) => ({
       id: product.id,
