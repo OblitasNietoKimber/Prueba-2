@@ -49,6 +49,14 @@ function ResetPasswordPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [resetLink] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return { token: params.get('token') || '', failed: params.get('insforge_status') === 'error' };
+  });
+  useEffect(() => {
+    window.history.replaceState(window.history.state, '', '/reset-password');
+  }, []);
+
   const [form, setForm] = useState({
     email: location.state?.email || '',
     code: '',
@@ -94,9 +102,9 @@ function ResetPasswordPage() {
 
     setFormError('');
 
-    const fieldErrors = validateResetPasswordForm(form);
+    const fieldErrors = validateResetPasswordForm({ ...form, token: resetLink.token });
 
-    if (!form.email.trim()) {
+    if (!resetLink.token && !form.email.trim()) {
       fieldErrors.email = 'Ingresa tu correo electrónico.';
     }
 
@@ -107,7 +115,8 @@ function ResetPasswordPage() {
     setLoading(true);
 
     try {
-      await authService.resetPassword(form);
+      if (resetLink.failed) throw new Error('El enlace expiró o no es válido. Solicita otro correo.');
+      await authService.resetPassword({ ...form, token: resetLink.token });
       setSuccess(true);
     } catch (err) {
       setFormError(
@@ -130,7 +139,7 @@ function ResetPasswordPage() {
         </h1>
 
         <p className="login-page__subtitle">
-          Ingresa el código que te enviamos y tu nueva contraseña.
+          {resetLink.token ? 'Elige tu nueva contraseña.' : 'Ingresa el código recibido por correo y tu nueva contraseña.'}
         </p>
 
         {success ? (
@@ -146,6 +155,8 @@ function ResetPasswordPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} noValidate>
+            {resetLink.failed && <p className="login-page__form-error" role="alert">El enlace expiró o no es válido. Solicita otro correo.</p>}
+            {!resetLink.token && <>
             <Field
               label="Correo electrónico"
               name="email"
@@ -167,6 +178,7 @@ function ResetPasswordPage() {
               autoComplete="one-time-code"
             />
 
+            </>}
             <Field
               label="Nueva contraseña"
               name="password"
@@ -198,7 +210,7 @@ function ResetPasswordPage() {
             <button
               type="submit"
               className="btn-ember login-page__submit"
-              disabled={loading}
+              disabled={loading || resetLink.failed}
             >
               {loading ? 'Guardando...' : 'Restablecer contraseña'}
             </button>
@@ -208,7 +220,7 @@ function ResetPasswordPage() {
                 to="/forgot-password"
                 className="login-page__link"
               >
-                Reenviar código
+                Solicitar otro correo
               </Link>
             </p>
           </form>

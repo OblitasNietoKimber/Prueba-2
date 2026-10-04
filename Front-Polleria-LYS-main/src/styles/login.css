@@ -236,25 +236,6 @@
 .login-page .login-page__success p {
   margin: 0 0 12px;
 }
-.login-page .login-page__demo-code {
-  margin: 0 0 16px;
-  padding: 12px 14px;
-
-  background: #fbf3e1;
-  color: #694b19;
-  border: 1px solid #d8b66b;
-  border-radius: 7px;
-
-  font-size: 0.85rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.login-page .login-page__demo-code strong {
-  font-size: 1rem;
-  letter-spacing: 0.08em;
-}
-
 .login-page .login-page__input:disabled {
   background: #f5f2ee;
   color: #71665b;

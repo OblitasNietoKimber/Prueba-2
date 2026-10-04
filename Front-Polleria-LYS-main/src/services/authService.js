@@ -172,6 +172,7 @@ export async function resetPassword({ email, code, password, token }) {
   }
   if (!otp) throw new Error('El enlace o código de recuperación no es válido. Solicita uno nuevo.');
   resultOrThrow(await getInsforge().auth.resetPassword({ newPassword: password, otp }));
+  await getInsforge().auth.signOut();
   generation++;
   publish({ user: null, loading: false, error: '' });
 }

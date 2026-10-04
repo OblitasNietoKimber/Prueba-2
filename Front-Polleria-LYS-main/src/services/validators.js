@@ -83,8 +83,11 @@ export function validateForgotPasswordForm(form) {
 export function validateResetPasswordForm(form) {
   const errors = {};
 
-  if (!form.code) {
-    errors.code = 'Ingresa el código de verificación.';
+  if (!form.token && !/^\d{6}$/.test((form.code || '').trim())) {
+    errors.code = 'Ingresa el código de 6 dígitos recibido por correo.';
+  }
+  if (!form.token && !isValidEmail(form.email)) {
+    errors.email = 'Ingresa un correo electrónico válido.';
   }
 
   const passwordError = getPasswordError(form.password);
