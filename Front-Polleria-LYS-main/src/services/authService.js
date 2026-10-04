@@ -53,6 +53,19 @@ export function initializeAuth() {
         if (event === 'signedOut') { generation++; publish({ user: null, loading: false, error: '' }); }
       });
       const version = generation;
+      const params = new URLSearchParams(window.location.search);
+      if (window.location.pathname === '/auth/callback') {
+        try {
+          if (params.get('error') || params.get('insforge_error')) {
+            throw new Error('El inicio de sesión con el proveedor fue cancelado o rechazado. Inténtalo nuevamente.');
+          }
+          const code = params.get('insforge_code');
+          if (!code) throw new Error('No recibimos el código de inicio de sesión. Vuelve a intentarlo.');
+          resultOrThrow(await client.auth.exchangeOAuthCode(code));
+        } finally {
+          window.history.replaceState(window.history.state, '', '/auth/callback');
+        }
+      }
       const { data, error } = await client.auth.getCurrentUser();
       // Una visita sin sesión es normal. Un fallo de red debe poder reintentarse.
       if (error && ![401, 403].includes(error.statusCode ?? error.status)) {
@@ -161,4 +174,15 @@ export async function resetPassword({ email, code, password, token }) {
   resultOrThrow(await getInsforge().auth.resetPassword({ newPassword: password, otp }));
   generation++;
   publish({ user: null, loading: false, error: '' });
+}
+
+
+export async function signInWithProvider(provider) {
+  const { data, error } = await getInsforge().auth.signInWithOAuth(provider, {
+    redirectTo: `${window.location.origin}/auth/callback`,
+    skipBrowserRedirect: true,
+  });
+  if (error) throw new Error(error.message || 'No se pudo iniciar sesión con el proveedor.');
+  if (!data?.url) throw new Error('El proveedor no está configurado en InsForge.');
+  window.location.assign(data.url);
 }

@@ -30,6 +30,7 @@ function writeOrders(orders) {
 }
 
 function getOrders() {
+  if (!getCurrentUser()) return []
   return readOrders().filter(order => order.clienteId === getCurrentUser()?.id).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
 }
 
