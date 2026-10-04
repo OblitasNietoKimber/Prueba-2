@@ -9,11 +9,12 @@ git fetch origin
 git switch feature/login-validation
 cd Front-Polleria-LYS-main
 npm install
-Copy-Item .env.example .env
 npm run dev
 ```
 
-Completar `.env` con la URL del proyecto y su **Anon/Public Key**. No usar la clave administrativa `ik_...` en variables `VITE_*`: esas variables se incluyen en el navegador. `.env`, `.env.*` y `.insforge` están excluidos de Git; solo se versiona `.env.example`.
+La URL pública `https://aep52x8n.us-east.insforge.app` ya está configurada en el cliente. El login usa ese proyecto aunque no exista `.env`. Para usar otro proyecto o añadir su **Anon/Public Key**, copiar `.env.example` a `.env` y completar las variables. No usar la clave administrativa `ik_...` en variables `VITE_*`: esas variables se incluyen en el navegador. `.env`, `.env.*` y `.insforge` están excluidos de Git; solo se versiona `.env.example`.
+
+Un `VITE_INSFORGE_URL` configurado en `.env` tiene prioridad sobre la URL predeterminada; si está vacío, se usa la URL del proyecto. Reiniciar Vite después de modificar el archivo.
 
 La clave anon es opcional para los endpoints de autenticación del SDK; es necesaria para leer datos como usuario anónimo. No se inventó una clave pública ni se incluyó la clave privada facilitada en la conversación.
 
